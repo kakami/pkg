@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package types
+package types_test
 
 import (
 	"reflect"
 	"sort"
 	"testing"
+
+	"pkg/types"
 )
 
 func TestUnsafeSet(t *testing.T) {
-	driveSetTests(t, NewUnsafeSet())
+	driveSetTests(t, types.NewUnsafeSet())
 }
 
 func TestThreadsafeSet(t *testing.T) {
-	driveSetTests(t, NewThreadsafeSet())
+	driveSetTests(t, types.NewThreadsafeSet())
 }
 
 // Check that two slices contents are equal; order is irrelevant
@@ -37,9 +39,9 @@ func equal(a, b []string) bool {
 	return reflect.DeepEqual(as, bs)
 }
 
-func driveSetTests(t *testing.T, s Set) {
+func driveSetTests(t *testing.T, s types.Set) {
 	// Verify operations on an empty set
-	eValues := []string{}
+	var eValues []string
 	values := s.Values()
 	if !reflect.DeepEqual(values, eValues) {
 		t.Fatalf("Expect values=%v got %v", eValues, values)
@@ -165,7 +167,7 @@ func driveSetTests(t *testing.T, s Set) {
 
 func TestUnsafeSetContainsAll(t *testing.T) {
 	vals := []string{"foo", "bar", "baz"}
-	s := NewUnsafeSet(vals...)
+	s := types.NewUnsafeSet(vals...)
 
 	tests := []struct {
 		strs     []string

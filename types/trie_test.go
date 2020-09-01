@@ -17,13 +17,16 @@ package types_test
 import (
 	"strings"
 	"testing"
+
+	"pkg/types"
 )
 
 func TestDNSMatch(t *testing.T) {
 
-	trie := NewTrie()
+	trie := types.NewTrie()
 	if trie == nil {
-		t.Error()
+		t.Error("!!!! panic")
+		return
 	}
 
 	trie.Set(strings.Split("com.baidu.www", "."), "1")
