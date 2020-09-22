@@ -1,30 +1,18 @@
 package types_test
 
 import (
-	"math/rand"
 	"testing"
-	"time"
 
 	"pkg/types"
+	"pkg/util"
 )
-
-var chars = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_")
-
-func randomString(length int) string {
-	var out []byte
-	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < length; i++ {
-		out = append(out, chars[rand.Int()%len(chars)])
-	}
-	return string(out)
-}
 
 func Test_List(t *testing.T) {
 	list := types.NewList()
 
 	var ss5 string
 	for i := 0; i < 10; i++ {
-		ss := randomString(10)
+		ss := util.RandomString(10)
 		list.PushBack(ss, ss)
 		if i == 5 {
 			ss5 = ss
@@ -43,7 +31,7 @@ func Test_List(t *testing.T) {
 		list.MoveToBack(list.Front())
 	}
 
-	sss := randomString(15)
+	sss := util.RandomString(15)
 	e := list.Find(ss5)
 	if e == nil {
 		t.Error(">>> Find")
