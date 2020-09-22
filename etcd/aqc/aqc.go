@@ -2,6 +2,7 @@ package aqc
 
 import (
 	"context"
+	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -20,6 +21,7 @@ const (
 
 const (
 	acField = iota
+	markField
 	keyField
 	memberField
 	timeField
@@ -35,7 +37,7 @@ type Handler interface {
 type Logger interface {
 	Debug(interface{}, ...interface{})
 	Info(interface{}, ...interface{})
-	Error(interface{}, ...interface{})
+	Error(interface{}, ...interface{}) error
 }
 
 type AcQueue struct {
@@ -74,6 +76,7 @@ func (ac *AcQueue) RegisterMember(member string, handler Handler, interval int64
 	}
 	worker := newWorker(ac, member, handler, interval)
 	ac.workers[member] = worker
+	ac.Member.Add(member)
 
 	return nil
 }
@@ -88,14 +91,16 @@ func (ac *AcQueue) UnregisterMember(member string) error {
 		worker.cancel()
 		delete(ac.workers, member)
 	}
+	ac.Member.Remove(member)
 	return nil
 }
 
 func (ac *AcQueue) PreAdd(key string) {
-	ac.prevKeys.Add(key)
+	ac.prevKeys.Add(url.QueryEscape(key))
 }
 
 func (ac *AcQueue) Init(mark string) error {
+	ac.mark = mark
 	if len(ac.workers) < 1 {
 		return errors.New("AcQueue::Init No worker registered")
 	}
@@ -129,11 +134,16 @@ func (ac *AcQueue) Init(mark string) error {
 		if err != nil {
 			return errors.WithMessage(err, "AcQueue::Init dispatch work")
 		}
-		if worker, ok := ac.workers[member]; ok {
-			worker.add(left[idx])
-		} else {
-			return errors.New("!!!!! this should be unreachable")
+		if err = ac.dispatch(left[idx], member); err != nil {
+			return errors.WithMessagef(err, "AcQueue::Init dispatch to %s", member)
 		}
+		/*
+			if worker, ok := ac.workers[member]; ok {
+				worker.add(left[idx])
+			} else {
+				return errors.New("!!!!! this should be unreachable")
+			}
+		*/
 	}
 
 	for _, worker := range ac.workers {
@@ -142,16 +152,19 @@ func (ac *AcQueue) Init(mark string) error {
 	return nil
 }
 
-func (ac *AcQueue) Dispatch(key string) error {
+func (ac *AcQueue) Dispatch(key, member string) error {
 	ac.mLocker.Lock()
 	defer ac.mLocker.Unlock()
-	return ac.dispatch(key)
+	return ac.dispatch(key, member)
 }
 
-func (ac *AcQueue) dispatch(key string) error {
-	member, err := ac.Member.Get(&key)
-	if err != nil {
-		return errors.WithMessage(err, "AcQueue::Add Member Get")
+func (ac *AcQueue) dispatch(key, member string) error {
+	var err error
+	if member == "" {
+		member, err = ac.Member.Get(&key)
+		if err != nil {
+			return errors.WithMessage(err, "AcQueue::Add Member Get")
+		}
 	}
 	if worker, ok := ac.workers[member]; ok {
 		worker.add(key)
@@ -188,9 +201,9 @@ func (ac *AcQueue) retract(member string) error {
 	ac.Member.Remove(member)
 
 	if worker, ok := ac.workers[member]; ok {
-		tasks := worker.tasks()
+		tasks := worker.getTasksAndClear()
 		for idx := range tasks {
-			if err := ac.dispatch(tasks[idx]); err != nil {
+			if err := ac.dispatch(tasks[idx], ""); err != nil {
 				return errors.WithMessagef(err, "AcQueue::retract dispatch [%s] err: %s", tasks[idx], err.Error())
 			}
 		}
@@ -202,8 +215,10 @@ func (ac *AcQueue) retract(member string) error {
 func (ac *AcQueue) activate(member string) error {
 	ac.mLocker.Lock()
 	defer ac.mLocker.Unlock()
+	ac.logger.Info("\n====================== AcQueue::activate =========================")
+	ac.logger.Info(">> [%s] is good now", member)
 	if _, ok := ac.workers[member]; !ok {
-		return errors.Errorf("worker [%s] not registered")
+		return errors.Errorf("worker [%s] not registered", member)
 	}
 	ac.Member.Add(member)
 	return nil

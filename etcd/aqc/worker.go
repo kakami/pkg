@@ -2,6 +2,8 @@ package aqc
 
 import (
 	"context"
+	"math"
+	"net/url"
 	"sync"
 	"time"
 
@@ -38,13 +40,17 @@ func newWorker(ac *AcQueue, id string, handler Handler, interval int64) *worker 
 		interval: interval,
 	}
 	w.ctx, w.cancel = context.WithCancel(ac.ctx)
+	if w.interval < 1 {
+		w.interval = int64(math.MaxInt32)
+	}
 	return w
 }
 
 func (w *worker) add(key string) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	w.works.PushFront(key, &uTask{work: key})
+	ukey, _ := url.QueryUnescape(key)
+	w.works.PushFront(ukey, &uTask{work: ukey})
 }
 
 func (w *worker) remove(key string) {
@@ -77,7 +83,9 @@ func (w *worker) monitor() error {
 		case <-w.ctx.Done():
 			return errors.New("worker::monitor ctx Done")
 		case <-w.handler.UnderRepair():
+			w.mu.Lock()
 			w.underRepair = true
+			w.mu.Unlock()
 			w.ac.retract(w.id)
 		case <-w.handler.Repaired():
 			w.ac.activate(w.id)
@@ -93,22 +101,21 @@ func (w *worker) working() error {
 		case <-w.gctx.Done():
 			return errors.New("worker::working gctx Done")
 		case <-ticker.C:
+			w.mu.Lock()
 			if w.underRepair {
+				w.mu.Unlock()
 				continue
 			}
 			tNow := time.Now().Unix()
 			for {
-				w.mu.Lock()
 				e := w.works.Front()
 				if e == nil {
-					w.mu.Unlock()
 					break
 				}
 				if task, ok := e.Value.(*uTask); ok {
 					if tNow > task.ttl {
 						task.ttl = tNow + w.interval
 					} else {
-						w.mu.Unlock()
 						break
 					}
 					go w.handler.HandleKey(task.work)
@@ -116,13 +123,13 @@ func (w *worker) working() error {
 				} else {
 					w.works.Remove(e)
 				}
-				w.mu.Unlock()
 			}
+			w.mu.Unlock()
 		}
 	}
 }
 
-func (w *worker) tasks() []string {
+func (w *worker) getTasksAndClear() []string {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	var tasks []string
@@ -131,5 +138,6 @@ func (w *worker) tasks() []string {
 			tasks = append(tasks, t.work)
 		}
 	}
+	w.works.Init()
 	return tasks
 }
