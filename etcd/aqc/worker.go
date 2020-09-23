@@ -64,6 +64,7 @@ func (w *worker) run() {
 	for {
 		select {
 		case <-w.ctx.Done():
+			w.handler.Cancel()
 			return
 		default:
 			w.g, w.gctx = errgroup.WithContext(w.ctx)

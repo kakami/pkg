@@ -32,6 +32,7 @@ type Handler interface {
 	HandleKey(string)
 	UnderRepair() <-chan struct{}
 	Repaired() <-chan struct{}
+	Cancel()
 }
 
 type Logger interface {
@@ -77,6 +78,8 @@ func (ac *AcQueue) RegisterMember(member string, handler Handler, interval int64
 	worker := newWorker(ac, member, handler, interval)
 	ac.workers[member] = worker
 	ac.Member.Add(member)
+
+	go worker.run()
 
 	return nil
 }
@@ -146,9 +149,6 @@ func (ac *AcQueue) Init(mark string) error {
 		*/
 	}
 
-	for _, worker := range ac.workers {
-		go worker.run()
-	}
 	return nil
 }
 
