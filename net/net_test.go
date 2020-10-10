@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"pkg/net"
+	"github.com/kakami/pkg/net"
 )
 
 func Test_CurrentIP(t *testing.T) {

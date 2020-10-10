@@ -19,7 +19,7 @@ import (
 	"sort"
 	"testing"
 
-	"pkg/types"
+	"github.com/kakami/pkg/types"
 )
 
 func TestUnsafeSet(t *testing.T) {

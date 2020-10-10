@@ -3,8 +3,8 @@ package types_test
 import (
 	"testing"
 
-	"pkg/types"
-	"pkg/util"
+	"github.com/kakami/pkg/types"
+	"github.com/kakami/pkg/util"
 )
 
 func Test_List(t *testing.T) {

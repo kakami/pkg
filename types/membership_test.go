@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"pkg/types"
+	"github.com/kakami/pkg/types"
 )
 
 func Test_RoundRobinMembership(t *testing.T) {

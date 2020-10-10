@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"pkg/types"
+	"github.com/kakami/pkg/types"
 )
 
 func TestDNSMatch(t *testing.T) {
