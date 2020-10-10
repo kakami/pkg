@@ -77,3 +77,43 @@ func (m *roundRobin) Clear() {
 	m.mset = NewUnsafeSet()
 	m.members = m.mset.Values()
 }
+
+// NewConsistentMembership
+// ================================================
+func NewConsistentMembership(num int) Membership {
+	m := &consistent{
+		c: NewConsistent(),
+	}
+	m.c.NumberOfReplicas = num
+	return m
+}
+
+type consistent struct {
+	c *Consistent
+}
+
+func (m *consistent) Add(member string) {
+	m.c.Add(member)
+}
+
+func (m *consistent) Adds(members ...string) {
+	for idx := range members {
+		m.c.Add(members[idx])
+	}
+}
+
+func (m *consistent) Members() []string {
+	return m.c.Members()
+}
+
+func (m *consistent) Remove(member string) {
+	m.c.Remove(member)
+}
+
+func (m *consistent) Get(key *string) (string, error) {
+	return m.c.Get(*key)
+}
+
+func (m *consistent) Clear() {
+	m.c.Set(nil)
+}

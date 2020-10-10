@@ -43,6 +43,7 @@ func Test_List(t *testing.T) {
 	for e := list.Front(); e != nil; e = e.Next() {
 		t.Log(e.Value.(string))
 	}
+	t.Log("===> len", list.Len())
 
 	t.Log("========= InsertBefore " + ss5 + " ========")
 	list.InsertBefore(sss, sss, e)
@@ -50,6 +51,7 @@ func Test_List(t *testing.T) {
 	for e := list.Front(); e != nil; e = e.Next() {
 		t.Log(e.Value.(string))
 	}
+	t.Log("===> len", list.Len())
 
 	t.Log("========= PushFront ========")
 	list.PushFront(sss, sss)
@@ -61,6 +63,7 @@ func Test_List(t *testing.T) {
 	for e := list.Front(); e != nil; e = e.Next() {
 		t.Log(e.Value.(string))
 	}
+	t.Log("===> len", list.Len())
 
 	t.Log("========= PushBack ========")
 	list.PushBack(sss, sss)
@@ -72,12 +75,14 @@ func Test_List(t *testing.T) {
 	for e := list.Front(); e != nil; e = e.Next() {
 		t.Log(e.Value.(string))
 	}
+	t.Log("===> len", list.Len())
 
 	t.Log("========= Remove " + sss + " ========")
 	list.RemoveByKey(sss)
 	for e := list.Front(); e != nil; e = e.Next() {
 		t.Log(e.Value.(string))
 	}
+	t.Log("===> len", list.Len())
 
 	t.Log("========= Remove ========")
 	for {
@@ -88,4 +93,5 @@ func Test_List(t *testing.T) {
 		t.Log(e.Value.(string))
 		list.Remove(e)
 	}
+	t.Log("===> len", list.Len())
 }
