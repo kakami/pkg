@@ -28,6 +28,10 @@ var (
 	ErrChannelOverflowed = errors.New("log channel overflowed")
 )
 
+type logMsg struct {
+	str string
+}
+
 // WhenIsValid checks whether value of when is valid
 func WhenIsValid(when string) bool {
 	switch strings.ToUpper(when) {
@@ -41,7 +45,7 @@ func WhenIsValid(when string) bool {
 type TimeFileLogWriter struct {
 	LogCloser
 
-	rec chan []byte
+	rec chan *logMsg
 
 	// The opened file
 	filename     string
@@ -66,7 +70,7 @@ func NewTimeFileLogWriter(fname, when string, backupCount int) *TimeFileLogWrite
 
 	when = strings.ToUpper(when)
 	w := &TimeFileLogWriter{
-		rec:         make(chan []byte, LogBufferLength),
+		rec:         make(chan *logMsg, LogBufferLength),
 		filename:    fname,
 		when:        when,
 		backupCount: backupCount,
@@ -107,7 +111,7 @@ func NewTimeFileLogWriter(fname, when string, backupCount int) *TimeFileLogWrite
 				}
 			}
 
-			w.file.Write(rec)
+			w.file.WriteString(rec.str)
 		}
 	}()
 
@@ -120,7 +124,7 @@ func (w *TimeFileLogWriter) Write(msg []byte) (int, error) {
 			return 0, ErrChannelOverflowed
 		}
 	}
-	w.rec <- msg
+	w.rec <- &logMsg{str: string(msg)}
 	return len(msg), nil
 }
 
@@ -313,7 +317,7 @@ func (lc *LogCloser) LogCloserInit() {
 }
 
 // notyfy the logger log to end
-func (lc *LogCloser) EndNotify(lr []byte) bool {
+func (lc *LogCloser) EndNotify(lr *logMsg) bool {
 	if lr == nil && lc.IsEnd != nil {
 		lc.IsEnd <- true
 		return true
@@ -322,7 +326,7 @@ func (lc *LogCloser) EndNotify(lr []byte) bool {
 }
 
 // add nil to end of res and wait that EndNotify is call
-func (lc *LogCloser) WaitForEnd(rec chan []byte) {
+func (lc *LogCloser) WaitForEnd(rec chan *logMsg) {
 	rec <- nil
 	if lc.IsEnd != nil {
 		<-lc.IsEnd

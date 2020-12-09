@@ -32,20 +32,27 @@ func Test_TimeFileLogWriter(t *testing.T) {
 	// 	goWrite(t, lw)
 	// 	return nil
 	// })
+	/*
+		g.Go(func() error {
+			goZapSugarLog(t, lw)
+			return nil
+		})
+		g.Go(func() error {
+			goZapLog(t, lw)
+			return nil
+		})
+		g.Go(func() error {
+			goZapLog(t, lw)
+			return nil
+		})
+	*/
 	g.Go(func() error {
-		goZapSugarLog(t, lw)
-		return nil
-	})
-	g.Go(func() error {
-		goZapLog(t, lw)
-		return nil
-	})
-	g.Go(func() error {
-		goZapLog(t, lw)
+		goForZapSugarLog(t, lw)
 		return nil
 	})
 
 	t.Log(g.Wait(), _sum.Load())
+	lw.Close()
 }
 
 func goWrite(t *testing.T, w io.Writer) {
@@ -140,6 +147,39 @@ func goZapSugarLog(t *testing.T, w io.Writer) {
 			if t.Unix() > ttl {
 				return
 			}
+		}
+	}
+}
+
+func goForZapSugarLog(t *testing.T, w io.Writer) {
+	encoderConf := &zapcore.EncoderConfig{
+		MessageKey:     "msg",
+		LevelKey:       "level",
+		TimeKey:        "time",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     timeEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+		EncodeName:     zapcore.FullNameEncoder,
+	}
+	atomicLevel := zap.NewAtomicLevel()
+	atomicLevel.SetLevel(zapcore.DebugLevel)
+	core := zapcore.NewCore(
+		zapcore.NewConsoleEncoder(*encoderConf),
+		zapcore.AddSync(w),
+		atomicLevel,
+	)
+	log := zap.New(core).WithOptions(zap.AddCaller()).Sugar()
+	str := util.RandomString(int(rand.Int31n(200)))
+	for {
+		_sum.Inc()
+		log.Infof("for sugarLog msg: %s - %d", str, _sum.Load())
+		if _sum.Load() > 20 {
+			break
 		}
 	}
 }
