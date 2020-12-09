@@ -173,7 +173,7 @@ func goForZapSugarLog(t *testing.T, w io.Writer) {
 		zapcore.AddSync(w),
 		atomicLevel,
 	)
-	log := zap.New(core).WithOptions(zap.AddCaller()).Sugar()
+	log := zap.New(core).WithOptions(zap.AddCaller()).With(zap.String("tag", "zlog_test")).Sugar()
 	str := util.RandomString(int(rand.Int31n(200)))
 	for {
 		_sum.Inc()

@@ -20,11 +20,6 @@ const (
 )
 
 var (
-	LogBufferLength = 1024
-	LogWithBlocking = true
-)
-
-var (
 	ErrChannelOverflowed = errors.New("log channel overflowed")
 )
 
