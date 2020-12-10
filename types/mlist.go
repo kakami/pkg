@@ -262,3 +262,11 @@ func (l *List) PushFrontList(other *List) {
 		l.insertValue(e.key, e.Value, &l.root)
 	}
 }
+
+func (l *List) Elements() []*Element {
+	var es []*Element
+	for _, e := range l.mmap {
+		es = append(es, e)
+	}
+	return es
+}
