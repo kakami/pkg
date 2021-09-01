@@ -13,13 +13,13 @@ var (
 	LogWithBlocking = true
 )
 
-// set LogBufferLength (default is 1024)
+// SetLogBufferLength (default is 1024)
 // This should be invoked before create logWriter
 func SetLogBufferLength(bufferLen int) {
 	LogBufferLength = bufferLen
 }
 
-// set LogWithBlocking (default is true)
+// SetLogWithBlocking (default is true)
 // This should be invoked before create logWriter
 func SetLogWithBlocking(isBlocking bool) {
 	LogWithBlocking = isBlocking
@@ -50,6 +50,31 @@ func DefaultLogger(w io.Writer) *zap.Logger {
 		zapcore.NewConsoleEncoder(*encoderConf),
 		zapcore.AddSync(w),
 		atomicLevel,
+	)
+	log := zap.New(core).WithOptions(zap.AddCaller())
+
+	return log
+}
+
+func DefaultLoggerWithLevel(w io.Writer, lvl zap.AtomicLevel) *zap.Logger {
+	encoderConf := &zapcore.EncoderConfig{
+		MessageKey:     "msg",
+		LevelKey:       "level",
+		TimeKey:        "time",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     timeEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+		EncodeName:     zapcore.FullNameEncoder,
+	}
+	core := zapcore.NewCore(
+		zapcore.NewConsoleEncoder(*encoderConf),
+		zapcore.AddSync(w),
+		lvl,
 	)
 	log := zap.New(core).WithOptions(zap.AddCaller())
 

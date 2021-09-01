@@ -21,3 +21,11 @@ func CurrentIP() ([]string, error) {
 	}
 	return out, err
 }
+
+func DefaultIP() (string, error) {
+	return getDefaultIP()
+}
+
+func SetProxy(addr, port string, enable bool) {
+	setSystemProxy(addr, port, enable)
+}

@@ -3,6 +3,7 @@ package zlog_test
 import (
 	"io"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
@@ -182,4 +183,23 @@ func goForZapSugarLog(t *testing.T, w io.Writer) {
 			break
 		}
 	}
+}
+
+func Test_DefaultLoggerWithLevel(t *testing.T) {
+	lvl := zap.NewAtomicLevelAt(zapcore.DebugLevel)
+
+	lg := zlog.DefaultLoggerWithLevel(os.Stdout, lvl).Sugar()
+	lg.Debug("============")
+	lg.Info("===========")
+	lg.Error("==============")
+
+	lvl.SetLevel(zapcore.InfoLevel)
+	lg.Debug("============")
+	lg.Info("===========")
+	lg.Error("==============")
+
+	lvl.SetLevel(zapcore.ErrorLevel)
+	lg.Debug("============")
+	lg.Info("===========")
+	lg.Error("==============")
 }

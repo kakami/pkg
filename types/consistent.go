@@ -19,8 +19,10 @@ package types
 
 import (
 	"errors"
+	"fmt"
 	"hash/crc32"
 	"hash/fnv"
+	"math"
 	"sort"
 	"strconv"
 	"sync"
@@ -57,7 +59,7 @@ type Consistent struct {
 // To change the number of replicas, set NumberOfReplicas before adding entries.
 func NewConsistent() *Consistent {
 	c := new(Consistent)
-	c.NumberOfReplicas = 1237
+	c.NumberOfReplicas = 163
 	c.circle = make(map[uint32]string)
 	c.members = make(map[string]bool)
 	return c
@@ -211,6 +213,7 @@ func (c *Consistent) GetN(name string, n int) ([]string, error) {
 		res   = make([]string, 0, n)
 		elem  = c.circle[c.sortedHashes[i]]
 	)
+	start = 0
 
 	res = append(res, elem)
 
@@ -276,4 +279,32 @@ func sliceContainsMember(set []string, member string) bool {
 		}
 	}
 	return false
+}
+
+func (c *Consistent) Print() int {
+	var last uint32
+	md := make(map[string]int64)
+	for idx := range c.sortedHashes {
+		p := c.sortedHashes[idx]
+		// fmt.Println(c.circle[p], "\t", p - last)
+		if v, ok := md[c.circle[p]]; ok {
+			md[c.circle[p]] = v + int64(p-last)
+		} else {
+			md[c.circle[p]] = int64(p - last)
+		}
+		last = p
+	}
+
+	var min, max int64
+	min = math.MaxInt64
+	for k, v := range md {
+		fmt.Println(k, "\t", v)
+		if min > v {
+			min = v
+		}
+		if max < v {
+			max = v
+		}
+	}
+	return int(min * 100 / max)
 }
