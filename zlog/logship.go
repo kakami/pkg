@@ -1,42 +1,47 @@
 package zlog
 
 import (
-	"io"
-	"os"
-	"sync"
+    "io"
+    "os"
+    "sync"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+    "go.uber.org/zap"
+    "go.uber.org/zap/zapcore"
 )
 
 var (
-	_w    io.Writer = os.Stdout
-	_lvls sync.Map
+    _w     io.Writer = os.Stdout
+    _lvls  sync.Map
+    _level = zapcore.InfoLevel
 )
 
 func SetWriter(w io.Writer) {
-	_w = w
+    _w = w
+}
+
+func SetDefaultLevel(l zapcore.Level) {
+    _level = l
 }
 
 func LoggerWithTag(tag string) *zap.Logger {
-	ptag := "[" + tag + "]"
-	lvli, _ := _lvls.LoadOrStore(tag, zap.NewAtomicLevelAt(zapcore.InfoLevel))
-	lvl, _ := lvli.(zap.AtomicLevel)
-	return DefaultLoggerWithLevel(_w, lvl).Named(ptag)
+    ptag := "[" + tag + "]"
+    lvli, _ := _lvls.LoadOrStore(tag, zap.NewAtomicLevelAt(_level))
+    lvl, _ := lvli.(zap.AtomicLevel)
+    return DefaultLoggerWithLevel(_w, lvl).Named(ptag)
 }
 
 func SetLevel(tag string, l zapcore.Level) {
-	lvli, _ := _lvls.LoadOrStore(tag, zap.NewAtomicLevel())
-	lvl, _ := lvli.(zap.AtomicLevel)
-	lvl.SetLevel(l)
+    lvli, _ := _lvls.LoadOrStore(tag, zap.NewAtomicLevel())
+    lvl, _ := lvli.(zap.AtomicLevel)
+    lvl.SetLevel(l)
 }
 
 func Enabled(tag string, l zapcore.Level) bool {
-	lvli, ok := _lvls.Load(tag)
-	if ok {
-		if lvl, ok := lvli.(zap.AtomicLevel); ok {
-			return lvl.Enabled(l)
-		}
-	}
-	return false
+    lvli, ok := _lvls.Load(tag)
+    if ok {
+        if lvl, ok := lvli.(zap.AtomicLevel); ok {
+            return lvl.Enabled(l)
+        }
+    }
+    return false
 }
