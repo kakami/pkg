@@ -81,7 +81,7 @@ func DefaultLoggerWithLevel(w io.Writer, lvl zap.AtomicLevel) *zap.Logger {
     return log
 }
 
-func New(w io.Writer, cfg *zapcore.EncoderConfig, lvl zap.AtomicLevel) *zap.Logger {
+func NewLogger(w io.Writer, cfg *zapcore.EncoderConfig, lvl zap.AtomicLevel) *zap.Logger {
     core := zapcore.NewCore(
         zapcore.NewConsoleEncoder(*cfg),
         zapcore.AddSync(w),

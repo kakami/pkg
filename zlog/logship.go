@@ -10,34 +10,69 @@ import (
 )
 
 var (
-    _w     io.Writer = os.Stdout
-    _lvls  sync.Map
-    _level = zapcore.InfoLevel
+    _defaultLogship = New(os.Stdout, zapcore.InfoLevel)
 )
 
+func Default() *Logship {
+    return _defaultLogship
+}
+
 func SetWriter(w io.Writer) {
-    _w = w
+    _defaultLogship.SetWriter(w)
 }
 
 func SetDefaultLevel(l zapcore.Level) {
-    _level = l
+    _defaultLogship.SetDefaultLevel(l)
 }
 
 func LoggerWithTag(tag string) *zap.Logger {
-    ptag := "[" + tag + "]"
-    lvli, _ := _lvls.LoadOrStore(tag, zap.NewAtomicLevelAt(_level))
-    lvl, _ := lvli.(zap.AtomicLevel)
-    return DefaultLoggerWithLevel(_w, lvl).Named(ptag)
+    return _defaultLogship.LoggerWithTag(tag)
 }
 
 func SetLevel(tag string, l zapcore.Level) {
-    lvli, _ := _lvls.LoadOrStore(tag, zap.NewAtomicLevel())
+    _defaultLogship.SetLevel(tag, l)
+}
+
+func Enabled(tag string, l zapcore.Level) bool {
+    return _defaultLogship.Enabled(tag, l)
+}
+
+type Logship struct {
+    w     io.Writer
+    lvls  sync.Map
+    level zapcore.Level
+}
+
+func New(w io.Writer, level zapcore.Level) *Logship {
+    return &Logship{
+        w:     w,
+        level: level,
+    }
+}
+
+func (ls *Logship) SetWriter(w io.Writer) {
+    ls.w = w
+}
+
+func (ls *Logship) SetDefaultLevel(l zapcore.Level) {
+    ls.level = l
+}
+
+func (ls *Logship) LoggerWithTag(tag string) *zap.Logger {
+    ptag := "[" + tag + "]"
+    lvli, _ := ls.lvls.LoadOrStore(tag, zap.NewAtomicLevelAt(ls.level))
+    lvl, _ := lvli.(zap.AtomicLevel)
+    return DefaultLoggerWithLevel(ls.w, lvl).Named(ptag)
+}
+
+func (ls *Logship) SetLevel(tag string, l zapcore.Level) {
+    lvli, _ := ls.lvls.LoadOrStore(tag, zap.NewAtomicLevel())
     lvl, _ := lvli.(zap.AtomicLevel)
     lvl.SetLevel(l)
 }
 
-func Enabled(tag string, l zapcore.Level) bool {
-    lvli, ok := _lvls.Load(tag)
+func (ls *Logship) Enabled(tag string, l zapcore.Level) bool {
+    lvli, ok := ls.lvls.Load(tag)
     if ok {
         if lvl, ok := lvli.(zap.AtomicLevel); ok {
             return lvl.Enabled(l)
