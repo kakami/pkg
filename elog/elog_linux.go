@@ -3,6 +3,11 @@
 
 package elog
 
+import (
+    "os"
+    "syscall"
+)
+
 func RedirectStderr(path string) error {
     ff, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_SYNC|os.O_APPEND, 0644)
     if err != nil {
