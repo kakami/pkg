@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	Mark    = "0.0.0.0"
+	ID    = "0.0.0.0"
 	Webhook = ""
 )
 

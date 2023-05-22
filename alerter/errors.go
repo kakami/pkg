@@ -42,7 +42,7 @@ const _AlertTemplate = `{
     "msgtype": "markdown",
     "markdown": {
     "content": "## %s
->Mark: %s
+>ID: %s
 >Accrued: %d
 >ErrMsg: %s
 >Time: %v"
@@ -50,7 +50,7 @@ const _AlertTemplate = `{
 }`
 
 func SendAlert(title string, num int, msg string) {
-	context := fmt.Sprintf(_AlertTemplate, title, Mark, num, msg, time.Now().Format("2006-01-02 15:04:05"))
+	context := fmt.Sprintf(_AlertTemplate, title, ID, num, msg, time.Now().Format("2006-01-02 15:04:05"))
 	resp, err := http.Post(
 		Webhook,
 		"application/json",
