@@ -18,7 +18,9 @@ type file struct {
 
 // NewSource new a file source.
 func NewSource(path string, opts ...Option) config.Source {
-    o := options{}
+    o := options{
+        suffixes: []string{".yaml", ".yml", ".json", ".xml"},
+    }
     for _, opt := range opts {
         opt(&o)
     }
