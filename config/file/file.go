@@ -1,6 +1,7 @@
 package file
 
 import (
+    "fmt"
     "io"
     "os"
     "path/filepath"
@@ -31,6 +32,16 @@ func NewSource(path string, opts ...Option) config.Source {
 }
 
 func (f *file) loadFile(path string) (*config.KeyValue, error) {
+    valid := false
+    for idx := range f.opts.suffixes {
+        if strings.HasSuffix(path, f.opts.suffixes[idx]) {
+            valid = true
+            break
+        }
+    }
+    if !valid {
+        return nil, fmt.Errorf("invalid suffix: %s", path)
+    }
     file, err := os.Open(path)
     if err != nil {
         return nil, err
