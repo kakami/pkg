@@ -58,10 +58,10 @@ type Consistent struct {
     sync.RWMutex
 }
 
-// New creates a new Consistent object with a default setting of 20 replicas for each entry.
+// NewConsistent creates a new Consistent object with a default setting of 20 replicas for each entry.
 //
 // To change the number of replicas, set NumberOfReplicas before adding entries.
-func New() *Consistent {
+func NewConsistent() *Consistent {
     c := new(Consistent)
     c.NumberOfReplicas = DefaultNumberOfReplicas
     c.UseFnv = true
