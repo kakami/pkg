@@ -7,19 +7,20 @@ import (
     "time"
 )
 
-type ExpireFunc func(string)
+type ExpireFunc func(Cell)
 
-type cell struct {
-    key string
-    ttl int64
+type Cell interface {
+    Key() string
+    IsExpired() bool
+    Less(Cell) bool
 }
 
 type KeepAlive struct {
     ctx      context.Context
     cancel   context.CancelFunc
     interval time.Duration
-    vmap     map[string]*cell
-    vs       []*cell
+    vmap     map[string]Cell
+    vs       []Cell
     exf      ExpireFunc
     mu       sync.RWMutex
 }
@@ -53,26 +54,17 @@ func (k *KeepAlive) Stop() {
     }
 }
 
-func (k *KeepAlive) IsAlive(key string) bool {
-    k.mu.RLock()
-    defer k.mu.RUnlock()
-    _, ok := k.vmap[key]
-    return ok
-}
-
-func (k *KeepAlive) Set(key string, ttl int64) {
+func (k *KeepAlive) Add(cell Cell) {
     k.mu.Lock()
     defer k.mu.Unlock()
 
-    if v, ok := k.vmap[key]; !ok {
-        v = &cell{
-            key: key,
-            ttl: ttl,
-        }
-        k.vmap[key] = v
-    } else {
-        v.ttl = ttl
+    k.vmap[cell.Key()] = cell
+    cells := make([]Cell, 0, len(k.vmap))
+    for _, v := range k.vmap {
+        cells = append(cells, v)
     }
+    k.vs = cells
+    sort.Sort(k)
 }
 
 //////////////////////////////
@@ -83,7 +75,7 @@ func (k *KeepAlive) Swap(i, j int) {
 }
 
 func (k *KeepAlive) Less(i, j int) bool {
-    return k.vs[i].ttl < k.vs[j].ttl
+    return k.vs[i].Less(k.vs[j])
 }
 
 func (k *KeepAlive) Len() int {
@@ -95,18 +87,18 @@ func (k *KeepAlive) checkAlive() int {
     defer k.mu.Unlock()
 
     sort.Sort(k)
-    tn := time.Now().Unix()
 
     var cnt int
     for idx := range k.vs {
-        if k.vs[idx].ttl > tn {
+        if !k.vs[idx].IsExpired() {
             break
         }
         if k.exf != nil {
-            k.exf(k.vs[idx].key)
+            k.exf(k.vs[idx])
         }
-        delete(k.vmap, k.vs[idx].key)
+        delete(k.vmap, k.vs[idx].Key())
         cnt++
     }
+    k.vs = k.vs[cnt:]
     return cnt
 }
