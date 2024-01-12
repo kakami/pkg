@@ -17,6 +17,10 @@ func NewUDPConn(conn *net.UDPConn, n int) *MUDPConn {
     }
 }
 
+func (c *MUDPConn) RMetrics() *RMet {
+    return c.RMet
+}
+
 func (c *MUDPConn) ReadFromUDP(b []byte) (int, *net.UDPAddr, error) {
     n, addr, err := c.UDPConn.ReadFromUDP(b)
     c.AddBytesRecv(int64(n))
@@ -98,6 +102,10 @@ func NewConn(conn net.Conn, n int) *MConn {
     }
 }
 
+func (c *MConn) RMetrics() *RMet {
+    return c.RMet
+}
+
 func (c *MConn) Read(b []byte) (int, error) {
     n, err := c.Conn.Read(b)
     c.AddBytesRecv(int64(n))
@@ -120,6 +128,10 @@ func NewPacketConn(conn net.PacketConn, n int) *MPacketConn {
         PacketConn: conn,
         RMet:       New(n),
     }
+}
+
+func (c *MPacketConn) RMetrics() *RMet {
+    return c.RMet
 }
 
 func (c *MPacketConn) ReadFrom(b []byte) (int, net.Addr, error) {
