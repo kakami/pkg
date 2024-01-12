@@ -85,3 +85,51 @@ func (c *MUDPConn) Read(b []byte) (int, error) {
     c.AddBytesRecv(int64(n))
     return n, err
 }
+
+type MConn struct {
+    net.Conn
+    *RMet
+}
+
+func NewConn(conn net.Conn, n int) *MConn {
+    return &MConn{
+        Conn: conn,
+        RMet: New(n),
+    }
+}
+
+func (c *MConn) Read(b []byte) (int, error) {
+    n, err := c.Conn.Read(b)
+    c.AddBytesRecv(int64(n))
+    return n, err
+}
+
+func (c *MConn) Write(b []byte) (int, error) {
+    n, err := c.Conn.Write(b)
+    c.AddBytesSent(int64(n))
+    return n, err
+}
+
+type MPacketConn struct {
+    net.PacketConn
+    *RMet
+}
+
+func NewPacketConn(conn net.PacketConn, n int) *MPacketConn {
+    return &MPacketConn{
+        PacketConn: conn,
+        RMet:       New(n),
+    }
+}
+
+func (c *MPacketConn) ReadFrom(b []byte) (int, net.Addr, error) {
+    n, addr, err := c.PacketConn.ReadFrom(b)
+    c.AddBytesRecv(int64(n))
+    return n, addr, err
+}
+
+func (c *MPacketConn) WriteTo(b []byte, addr net.Addr) (int, error) {
+    n, err := c.PacketConn.WriteTo(b, addr)
+    c.AddBytesSent(int64(n))
+    return n, err
+}
