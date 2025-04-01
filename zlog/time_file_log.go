@@ -3,7 +3,6 @@ package zlog
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -246,7 +245,7 @@ func (w *TimeFileLogWriter) getFilesToDelete() []string {
 
 	var result []string
 
-	fileInfos, err := ioutil.ReadDir(dirName)
+	fileInfos, err := os.ReadDir(dirName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "FileLogWriter(%q): %s\n", w.filename, err)
 		return result
@@ -267,7 +266,7 @@ func (w *TimeFileLogWriter) getFilesToDelete() []string {
 		}
 	}
 
-	sort.Sort(sort.StringSlice(result))
+	sort.Strings(result)
 
 	if len(result) < w.backupCount {
 		result = result[0:0]
@@ -289,14 +288,14 @@ func (w *TimeFileLogWriter) moveToBackup() error {
 		if _, err := os.Stat(fname); err == nil {
 			err = os.Remove(fname)
 			if err != nil {
-				return fmt.Errorf("Rotate: %s\n", err)
+				return fmt.Errorf("rotate: %s", err)
 			}
 		}
 
 		// Rename the file to its newfound home
 		err = os.Rename(w.baseFilename, fname)
 		if err != nil {
-			return fmt.Errorf("Rotate: %s\n", err)
+			return fmt.Errorf("rotate: %s", err)
 		}
 	}
 	return nil
