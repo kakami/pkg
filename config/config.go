@@ -64,7 +64,7 @@ func (c *config) watch(w Watcher) {
 		kvs, err := w.Next()
 		if err != nil {
 			if errors.Is(err, context.Canceled) {
-				log.Infof("watcher's ctx cancel : %v", err)
+				// log.Infof("watcher's ctx cancel : %v", err)
 				return
 			}
 			time.Sleep(time.Second)
@@ -99,9 +99,9 @@ func (c *config) Load() error {
 		if err != nil {
 			return err
 		}
-		for _, v := range kvs {
-			log.Debugf("config loaded: %s format: %s", v.Key, v.Format)
-		}
+		// for _, v := range kvs {
+		// log.Debugf("config loaded: %s format: %s", v.Key, v.Format)
+		// }
 		if err = c.reader.Merge(kvs...); err != nil {
 			log.Errorf("failed to merge config source: %v", err)
 			return err
